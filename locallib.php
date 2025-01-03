@@ -258,7 +258,9 @@ function local_bulkenrol_get_user($email) {
     } else {
         // Get user records for email.
         try {
-            $userrecords = $DB->get_records('user', ['email' => $email]);
+            // case-insensitive
+            $userrecords = $DB->get_records_sql('SELECT * FROM {user} WHERE LOWER(email) = LOWER(:email)', array('email' => $email));
+            // $userrecords = $DB->get_records('user', ['email' => $email]);
             $count = count($userrecords);
             if (!empty($count)) {
                 // More than one user with email -> ignore email and don't enrol users later!
@@ -298,7 +300,7 @@ function local_bulkenrol_get_exception_info($e) {
  * @param string $localbulkenrolkey
  * @return object
  */
-function local_bulkenrol_users($localbulkenrolkey) {
+function local_bulkenrol_users($localbulkenrolkey, $courseroleid) {
     global $CFG, $DB, $SESSION;
 
     $error = '';
@@ -380,7 +382,8 @@ function local_bulkenrol_users($localbulkenrolkey) {
 
                                         // Otherwise.
                                     } else {
-                                        $plugin->enrol_user($enrolinstance, $user->id, $roleid);
+                                        // $plugin->enrol_user($enrolinstance, $user->id, $roleid);
+                                        $plugin->enrol_user($enrolinstance, $user->id, $courseroleid);
                                     }
                                 } catch (Exception $e) {
                                     $a = new stdClass();
@@ -717,15 +720,22 @@ function local_bulkenrol_is_already_member($courseid, $groupname, $userid) {
 /**
  * Helper function to show the enrolment details about the upcoming enrolments.
  */
-function local_bulkenrol_display_enroldetails() {
+function local_bulkenrol_display_enroldetails($roleid=null) {
     global $DB, $OUTPUT;
 
     // Get enrolment configuration.
     $enrolpluginshortname = get_config('local_bulkenrol', 'enrolplugin');
     $enrolpluginname = get_string('pluginname', 'enrol_' . $enrolpluginshortname);
 
-    // Get role configuration.
-    $roleid = get_config('local_bulkenrol', 'role');
+    // // Get role configuration.
+    // $roleid = get_config('local_bulkenrol', 'role');
+
+    // If no role ID is provided, fallback to the plugin configuration role ID.
+    if (!$roleid) {
+        $roleid = get_config('local_bulkenrol', 'role');
+    }
+
+
     $role = $DB->get_record('role', ['id' => $roleid]);
     $systemcontext = context_system::instance();
     $roles = role_fix_names([$roleid => $role], $systemcontext, ROLENAME_ORIGINAL);

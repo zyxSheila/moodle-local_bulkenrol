@@ -44,7 +44,7 @@ class bulkenrol_form extends moodleform {
      * Form definition. Abstract method - always override!
      */
     protected function definition() {
-        global $CFG, $SESSION;
+        global $CFG, $SESSION, $COURSE;
 
         require_once($CFG->dirroot.'/local/bulkenrol/lib.php');
 
@@ -53,6 +53,26 @@ class bulkenrol_form extends moodleform {
         // Infotext.
         $msg = get_string('bulkenrol_form_intro', 'local_bulkenrol');
         $mform->addElement('html', '<div id="intro">'.$msg.'</div>');
+
+        // edit by Yixuan
+        // Get the context of the current course.
+        $context = \context_course::instance($COURSE->id);
+
+        // Fetch roles assignable in the course context.
+        $roles = get_assignable_roles($context, ROLENAME_BOTH);
+
+        // Prepare role options for the dropdown.
+        $roleoptions = [];
+        foreach ($roles as $roleid => $rolename) {
+            $roleoptions[$roleid] = $rolename;
+        }
+
+        // Add a role selection dropdown.
+        $mform->addElement('select', 'roleid', get_string('role', 'local_bulkenrol'), $roleoptions);
+        $mform->setDefault('roleid', array_key_last($roleoptions));
+        $mform->setType('roleid', PARAM_INT);
+        // end edit by Yixuan
+
 
         // Textarea for Emails.
         $mform->addElement('textarea', 'usermails',

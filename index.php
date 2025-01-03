@@ -64,6 +64,10 @@ if (empty($localbulkenrolkey)) {
 
         $checkedmails = local_bulkenrol_check_user_mails($emails, $courseid);
 
+        // edit by Yixuan: retrieve the roleid.
+        $roleid = $formdata->roleid;
+        // end edit by Yixuan
+
         // Create local_bulkenrol array in Session.
         if (!isset($SESSION->local_bulkenrol)) {
             $SESSION->local_bulkenrol = [];
@@ -71,6 +75,13 @@ if (empty($localbulkenrolkey)) {
         // Save data in Session.
         $localbulkenrolkey = $courseid.'_'.time();
         $SESSION->local_bulkenrol[$localbulkenrolkey] = $checkedmails;
+
+        // edit by Yixuan: save the selected roleid in the session for later use.
+        if (!isset($SESSION->local_bulkenrol_role)) {
+            $SESSION->local_bulkenrol_role = [];
+        }
+        $SESSION->local_bulkenrol_role[$localbulkenrolkey] = $roleid;
+        // end edit by Yixuan
 
         // Create local_bulkenrol_inputs array in session.
         if (!isset($SESSION->local_bulkenrol_inputs)) {
@@ -100,7 +111,15 @@ if ($localbulkenrolkey) {
                 array_key_exists($localbulkenrolkey, $SESSION->local_bulkenrol)) {
             set_time_limit(600);
 
-            $msg = local_bulkenrol_users($localbulkenrolkey);
+            
+            // edit by Yixuan
+            // Retrieve the roleid from the session.
+            $roleid = $SESSION->local_bulkenrol_role[$localbulkenrolkey] ?? null;
+            // Pass roleid to the enrolment function.
+            $msg = local_bulkenrol_users($localbulkenrolkey, $roleid);
+
+            // $msg = local_bulkenrol_users($localbulkenrolkey);
+            // end edit by Yixuan
 
             if ($msg->status == 'error') {
                 redirect($CFG->wwwroot .'/user/index.php?id='.$id, "$msg->text", null, \core\output\notification::NOTIFY_ERROR);
@@ -144,7 +163,9 @@ if ($localbulkenrolkey) {
 
             // Otherwise show the enrolment details and the form with the enrol users button.
         } else {
-            local_bulkenrol_display_enroldetails();
+            // edit by Yixuan: local_bulkenrol_display_enroldetails(); --> local_bulkenrol_display_enroldetails($roleid);
+            local_bulkenrol_display_enroldetails($roleid);
+            // end edit by Yixuan
             echo $form2->display();
         }
 
